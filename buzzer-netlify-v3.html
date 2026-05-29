@@ -1,0 +1,944 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Buzzer Cerdas Cermat</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Outfit:wght@400;600;700&display=swap');
+
+  :root {
+    --red: #e63946;
+    --blue: #1d7afc;
+    --gold: #ffd700;
+    --green: #22c55e;
+    --dark: #0a0a0f;
+    --panel: #12121a;
+    --border: rgba(255,255,255,0.08);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  body { background: var(--dark); color: #fff; font-family: 'Outfit', sans-serif; min-height: 100vh; overflow-x: hidden; }
+
+  .screen { display: none; }
+  .screen.active { display: flex; flex-direction: column; min-height: 100vh; }
+
+  /* HOME */
+  #home { align-items: center; justify-content: center; gap: 36px; padding: 40px 24px;
+    background: radial-gradient(ellipse at 50% 0%, #1a1a2e 0%, var(--dark) 70%); }
+  .logo-area { text-align: center; }
+  .logo-area h1 {
+    font-family: 'Bebas Neue', sans-serif; font-size: clamp(56px, 15vw, 100px);
+    letter-spacing: 4px; line-height: 1;
+    background: linear-gradient(135deg, #fff 0%, var(--gold) 100%);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+  }
+  .logo-area p { font-size: 13px; color: rgba(255,255,255,0.4); letter-spacing: 3px; text-transform: uppercase; margin-top: 8px; }
+  .mode-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; width: 100%; max-width: 480px; }
+  .mode-btn { border: none; border-radius: 20px; padding: 26px 14px; cursor: pointer; font-family: 'Outfit', sans-serif; font-weight: 700; font-size: 15px; transition: transform .12s; }
+  .mode-btn:active { transform: scale(0.94); }
+  .mode-btn .icon { font-size: 34px; display: block; margin-bottom: 10px; }
+  .mode-btn .label { display: block; font-size: 11px; font-weight: 600; letter-spacing: 1.5px; text-transform: uppercase; opacity: .7; margin-top: 4px; }
+  .btn-host { background: linear-gradient(135deg, #1d7afc, #0a4fa0); color: #fff; box-shadow: 0 8px 32px rgba(29,122,252,0.3); }
+  .btn-join { background: linear-gradient(135deg, #e63946, #8b0000); color: #fff; box-shadow: 0 8px 32px rgba(230,57,70,0.3); }
+  .btn-spectate { background: linear-gradient(135deg, #2d2d3a, #1a1a24); color: #fff; border: 1px solid var(--border); grid-column: 1/-1; }
+  .conn-method { background: rgba(255,255,255,0.04); border: 1px solid var(--border); border-radius: 14px; padding: 14px 18px; width: 100%; max-width: 480px; font-size: 13px; color: rgba(255,255,255,0.35); line-height: 1.6; }
+  .conn-method strong { color: rgba(255,255,255,0.65); }
+
+  /* HOST SETUP */
+  #host-setup { align-items: center; justify-content: center; gap: 24px; padding: 40px 24px;
+    background: radial-gradient(ellipse at 50% 0%, #0d1f3c 0%, var(--dark) 70%); }
+  .screen-title { font-family: 'Bebas Neue', sans-serif; font-size: 38px; letter-spacing: 3px; color: var(--gold); text-align: center; }
+  .setup-card { background: var(--panel); border: 1px solid var(--border); border-radius: 22px; padding: 26px; width: 100%; max-width: 420px; }
+  .field-label { font-size: 11px; letter-spacing: 2px; text-transform: uppercase; color: rgba(255,255,255,0.4); margin-bottom: 10px; }
+  .name-inputs { display: flex; flex-direction: column; gap: 12px; }
+  .name-row { display: flex; align-items: center; gap: 12px; }
+  .color-dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
+  .dot-red { background: var(--red); } .dot-blue { background: var(--blue); }
+  input[type="text"] { flex: 1; background: rgba(255,255,255,0.06); border: 1px solid var(--border); border-radius: 12px; padding: 13px 15px; color: #fff; font-family: 'Outfit', sans-serif; font-size: 15px; outline: none; transition: border-color .2s; }
+  input[type="text"]:focus { border-color: rgba(255,255,255,0.3); }
+
+  /* Firebase Room ID */
+  .room-card { background: rgba(255,215,0,0.07); border: 1px solid rgba(255,215,0,0.2); border-radius: 14px; padding: 16px 18px; width: 100%; max-width: 420px; }
+  .room-card p { font-size: 11px; color: rgba(255,255,255,0.4); letter-spacing: 1px; text-transform: uppercase; margin-bottom: 6px; }
+  .room-id-display { font-family: 'Bebas Neue', sans-serif; font-size: 42px; letter-spacing: 6px; color: var(--gold); word-break: break-all; text-align: center; }
+  .room-note { font-size: 12px; color: rgba(255,255,255,0.3); margin-top: 8px; line-height: 1.5; }
+
+  .action-btn { width: 100%; max-width: 420px; padding: 17px; border: none; border-radius: 15px; font-family: 'Bebas Neue', sans-serif; font-size: 22px; letter-spacing: 3px; cursor: pointer; transition: transform .12s, opacity .12s; }
+  .action-btn:active { transform: scale(0.97); opacity: .88; }
+  .btn-primary { background: linear-gradient(135deg, var(--gold), #e6a800); color: var(--dark); }
+  .btn-secondary { background: rgba(255,255,255,0.05); color: rgba(255,255,255,0.55); border: 1px solid var(--border); font-size: 15px; font-family: 'Outfit', sans-serif; font-weight: 600; letter-spacing: 0; padding: 13px; }
+
+  /* JOIN SETUP */
+  #join-setup { align-items: center; justify-content: center; gap: 24px; padding: 40px 24px;
+    background: radial-gradient(ellipse at 50% 0%, #1f0d0d 0%, var(--dark) 70%); }
+  .team-selector { display: flex; gap: 12px; width: 100%; max-width: 420px; }
+  .team-opt { flex: 1; padding: 20px 12px; border-radius: 16px; border: 2px solid transparent; cursor: pointer; text-align: center; font-weight: 700; font-size: 14px; letter-spacing: 1px; transition: all .2s; background: rgba(255,255,255,0.04); color: rgba(255,255,255,0.4); }
+  .team-opt .t-icon { font-size: 26px; display: block; margin-bottom: 8px; }
+  .team-opt.selected-red { border-color: var(--red); background: rgba(230,57,70,0.15); color: #fff; }
+  .team-opt.selected-blue { border-color: var(--blue); background: rgba(29,122,252,0.15); color: #fff; }
+
+  /* Room input */
+  .room-input-wrap { width: 100%; max-width: 420px; display: flex; flex-direction: column; gap: 8px; }
+  .room-input-wrap input { text-align: center; font-family: 'Bebas Neue', sans-serif; font-size: 28px; letter-spacing: 6px; color: var(--gold); }
+
+  /* ══ HOST CONTROL ══ */
+  #host-control { align-items: stretch; gap: 0; padding: 0; background: var(--dark); }
+
+  .host-header { width: 100%; padding: 14px 18px; background: var(--panel); border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between; }
+  .host-header h2 { font-family: 'Bebas Neue', sans-serif; font-size: 20px; letter-spacing: 2px; color: var(--gold); }
+  .status-badge { font-size: 10px; letter-spacing: 1.5px; text-transform: uppercase; padding: 5px 11px; border-radius: 20px; font-weight: 700; }
+  .badge-ready { background: rgba(0,200,100,0.13); color: #00c864; border: 1px solid rgba(0,200,100,0.25); }
+  .badge-locked { background: rgba(255,200,0,0.13); color: var(--gold); border: 1px solid rgba(255,200,0,0.25); }
+  .badge-buzz { background: rgba(230,57,70,0.18); color: #ff6b6b; border: 1px solid rgba(230,57,70,0.35); }
+
+  .score-bar { display: flex; align-items: stretch; height: 60px; border-bottom: 1px solid var(--border); }
+  .score-side { flex: 1; display: flex; align-items: center; justify-content: center; gap: 10px; font-weight: 700; font-size: 14px; transition: background .3s; }
+  .score-red { background: rgba(230,57,70,0.12); }
+  .score-blue { background: rgba(29,122,252,0.12); }
+  .score-side.winner-glow-red { background: rgba(230,57,70,0.28); }
+  .score-side.winner-glow-blue { background: rgba(29,122,252,0.28); }
+  .score-num { font-family: 'Bebas Neue', sans-serif; font-size: 34px; letter-spacing: 2px; }
+  .score-divider { width: 1px; background: var(--border); }
+
+  .host-result-area { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
+    padding: 24px; text-align: center; transition: background .4s; position: relative; overflow: hidden; }
+  .result-idle-bg { background: radial-gradient(ellipse at 50% 50%, #16161f 0%, var(--dark) 80%); }
+  .result-red-bg { background: radial-gradient(ellipse at 50% 40%, rgba(230,57,70,0.3) 0%, var(--dark) 70%); }
+  .result-blue-bg { background: radial-gradient(ellipse at 50% 40%, rgba(29,122,252,0.3) 0%, var(--dark) 70%); }
+
+  .idle-text { font-family: 'Bebas Neue', sans-serif; font-size: 28px; letter-spacing: 3px; color: rgba(255,255,255,0.18); }
+
+  .buzz-result-card { display: flex; flex-direction: column; align-items: center; gap: 6px; animation: cardPop .35s cubic-bezier(.17,.67,.35,1.3); }
+  @keyframes cardPop { from{transform:scale(0.6);opacity:0} to{transform:scale(1);opacity:1} }
+
+  .result-team-icon { font-size: 72px; }
+  .result-winner-label { font-size: 11px; letter-spacing: 3px; text-transform: uppercase; color: rgba(255,255,255,0.4); }
+  .result-winner-name { font-family: 'Bebas Neue', sans-serif; font-size: clamp(42px,12vw,72px); letter-spacing: 2px; line-height: 1; }
+  .result-winner-time { font-family: 'Bebas Neue', sans-serif; font-size: 20px; letter-spacing: 2px; color: rgba(255,255,255,0.28); margin-top: 4px; }
+
+  .buzz-history { width: 100%; padding: 10px 16px; display: flex; gap: 8px; overflow-x: auto; background: rgba(0,0,0,0.2); border-top: 1px solid var(--border); }
+  .hist-chip { flex-shrink: 0; padding: 5px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; }
+  .hist-red { background: rgba(230,57,70,0.2); color: #ff8f97; border: 1px solid rgba(230,57,70,0.3); }
+  .hist-blue { background: rgba(29,122,252,0.2); color: #7eb8ff; border: 1px solid rgba(29,122,252,0.3); }
+
+  .host-actions { padding: 14px 16px; display: flex; flex-direction: column; gap: 10px;
+    background: var(--panel); border-top: 1px solid var(--border); }
+  .host-actions .row { display: flex; gap: 10px; }
+  .ctrl-btn { flex: 1; padding: 13px 8px; border: none; border-radius: 13px; font-family: 'Outfit', sans-serif; font-weight: 700; font-size: 13px; cursor: pointer; transition: transform .1s, opacity .1s; letter-spacing: .3px; }
+  .ctrl-btn:active { transform: scale(0.95); opacity: .85; }
+  .btn-reset { background: linear-gradient(135deg, #22c55e, #16a34a); color: #fff; }
+  .btn-lock { background: linear-gradient(135deg, var(--gold), #d97706); color: var(--dark); }
+  .btn-point-red { background: linear-gradient(135deg, var(--red), #9b1c1c); color: #fff; }
+  .btn-point-blue { background: linear-gradient(135deg, var(--blue), #1e40af); color: #fff; }
+
+  /* ══ PLAYER BUZZ ══ */
+  #player-buzz { align-items: center; justify-content: space-between; padding: 0; }
+  .player-top { width: 100%; padding: 14px 18px; background: var(--panel); border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between; }
+  .player-name-tag { font-family: 'Bebas Neue', sans-serif; font-size: 22px; letter-spacing: 2px; }
+  .conn-dot { width: 8px; height: 8px; border-radius: 50%; background: #22c55e; display: inline-block; margin-right: 6px; animation: blink 1.5s infinite; }
+  .conn-dot.offline { background: #e63946; animation: none; }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.3} }
+  .conn-label { font-size: 12px; color: rgba(255,255,255,0.35); }
+
+  .buzz-area { flex: 1; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 28px; padding: 24px; }
+
+  .big-buzzer {
+    width: min(72vw, 270px); height: min(72vw, 270px); border-radius: 50%; border: none; cursor: pointer;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px;
+    font-family: 'Bebas Neue', sans-serif; font-size: 30px; letter-spacing: 3px; color: #fff;
+    transition: transform .08s, box-shadow .2s; user-select: none; -webkit-user-select: none; touch-action: manipulation;
+    position: relative;
+  }
+  .big-buzzer:active:not(.buzzer-disabled) { transform: scale(0.91); }
+  .big-buzzer .buzz-icon { font-size: 52px; }
+  .big-buzzer .spacebar-hint {
+    position: absolute; bottom: 22px; font-size: 10px; letter-spacing: 1px;
+    color: rgba(255,255,255,0.35); font-family: 'Outfit', sans-serif; font-weight: 600;
+    background: rgba(0,0,0,0.3); padding: 2px 8px; border-radius: 6px;
+  }
+  .buzzer-red { background: radial-gradient(ellipse at 35% 30%, #ff4d5a, #b01020);
+    box-shadow: 0 0 60px rgba(230,57,70,0.5), 0 20px 40px rgba(0,0,0,0.5), inset 0 2px 4px rgba(255,255,255,0.15); }
+  .buzzer-blue { background: radial-gradient(ellipse at 35% 30%, #4da3ff, #0a3fa0);
+    box-shadow: 0 0 60px rgba(29,122,252,0.5), 0 20px 40px rgba(0,0,0,0.5), inset 0 2px 4px rgba(255,255,255,0.15); }
+  .buzzer-disabled { background: radial-gradient(ellipse at 35% 30%, #2a2a2a, #111) !important; box-shadow: none !important; cursor: not-allowed; opacity: 0.38; }
+  .buzzer-winner { animation: winPop .5s cubic-bezier(.17,.67,.35,1.4); }
+  @keyframes winPop { 0%{transform:scale(1)} 40%{transform:scale(1.15)} 100%{transform:scale(1)} }
+
+  /* Spacebar indicator */
+  .spacebar-active { animation: spacePress .12s ease; }
+  @keyframes spacePress { 0%{transform:scale(1)} 50%{transform:scale(0.91)} 100%{transform:scale(1)} }
+
+  .player-status-card { width: 100%; max-width: 320px; padding: 16px 20px; border-radius: 18px; text-align: center; transition: all .3s; }
+  .psc-idle { background: rgba(255,255,255,0.04); border: 1px solid var(--border); }
+  .psc-win { background: rgba(34,197,94,0.15); border: 1px solid rgba(34,197,94,0.3); }
+  .psc-lose { background: rgba(230,57,70,0.1); border: 1px solid rgba(230,57,70,0.2); }
+  .psc-locked { background: rgba(255,200,0,0.08); border: 1px solid rgba(255,200,0,0.2); }
+  .psc-emoji { font-size: 28px; display: block; margin-bottom: 6px; }
+  .psc-text { font-size: 14px; font-weight: 600; line-height: 1.4; }
+  .psc-sub { font-size: 12px; color: rgba(255,255,255,0.4); margin-top: 4px; }
+
+  .retry-btn { width: 100%; max-width: 320px; padding: 15px; border: none; border-radius: 14px; cursor: pointer;
+    font-family: 'Bebas Neue', sans-serif; font-size: 20px; letter-spacing: 2px; transition: transform .1s, opacity .1s;
+    display: none; }
+  .retry-btn:active { transform: scale(0.96); opacity: .87; }
+  .retry-red { background: linear-gradient(135deg, var(--red), #9b1c1c); color: #fff; box-shadow: 0 6px 20px rgba(230,57,70,0.35); }
+  .retry-blue { background: linear-gradient(135deg, var(--blue), #1e40af); color: #fff; box-shadow: 0 6px 20px rgba(29,122,252,0.35); }
+
+  .buzz-status-text { font-size: 13px; letter-spacing: 1.5px; text-transform: uppercase; color: rgba(255,255,255,0.28); text-align: center; padding-bottom: 18px; }
+
+  /* ══ SPECTATOR ══ */
+  #spectator { align-items: center; justify-content: space-between; padding: 0; background: var(--dark); }
+  .spec-header { width: 100%; padding: 13px 18px; background: var(--panel); border-bottom: 1px solid var(--border); text-align: center; }
+  .spec-header h2 { font-family: 'Bebas Neue', sans-serif; font-size: 18px; letter-spacing: 3px; color: rgba(255,255,255,0.4); }
+  .spec-main { flex: 1; width: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 24px; text-align: center; transition: background .3s; }
+  .spec-buzz-view { display: none; flex-direction: column; align-items: center; gap: 10px; animation: cardPop .3s ease; }
+
+  /* flash overlay */
+  .flash-overlay { position: fixed; inset: 0; pointer-events: none; z-index: 999; opacity: 0; }
+  .flash-overlay.flash { animation: flashAnim .45s forwards; }
+  @keyframes flashAnim { 0%{opacity:.55} 100%{opacity:0} }
+
+  .back-btn { background: none; border: none; color: rgba(255,255,255,0.35); font-size: 20px; cursor: pointer; padding: 4px; }
+
+  /* Loading overlay */
+  #loading-overlay { position: fixed; inset: 0; background: var(--dark); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 20px; z-index: 9999; }
+  #loading-overlay.hidden { display: none; }
+  .loading-spinner { width: 44px; height: 44px; border: 3px solid rgba(255,215,0,0.2); border-top-color: var(--gold); border-radius: 50%; animation: spin .7s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .loading-text { font-family: 'Bebas Neue', sans-serif; font-size: 22px; letter-spacing: 3px; color: rgba(255,255,255,0.4); }
+
+  /* Error toast */
+  #toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: rgba(230,57,70,0.95); color: #fff; padding: 12px 22px; border-radius: 12px; font-size: 13px; font-weight: 600; z-index: 10000; opacity: 0; transition: opacity .3s; pointer-events: none; max-width: 300px; text-align: center; }
+  #toast.show { opacity: 1; }
+
+  /* Room badge on host header */
+  .room-badge { font-size: 10px; letter-spacing: 2px; color: rgba(255,215,0,0.6); font-weight: 600; }
+</style>
+</head>
+<body>
+
+<div id="flash-red" class="flash-overlay" style="background:rgba(230,57,70,0.45)"></div>
+<div id="flash-blue" class="flash-overlay" style="background:rgba(29,122,252,0.45)"></div>
+
+<!-- Loading -->
+<div id="loading-overlay">
+  <div class="loading-spinner"></div>
+  <div class="loading-text">Menghubungkan...</div>
+</div>
+
+<!-- Toast -->
+<div id="toast"></div>
+
+<!-- ════ HOME ════ -->
+<div id="home" class="screen">
+  <div class="logo-area">
+    <h1>BUZZER</h1>
+    <p>Cerdas Cermat · Firebase Edition</p>
+  </div>
+  <div class="mode-grid">
+    <button class="mode-btn btn-host" onclick="gotoScreen('host-setup')">
+      <span class="icon">🎙️</span>Host / Juri<span class="label">Kelola pertandingan</span>
+    </button>
+    <button class="mode-btn btn-join" onclick="gotoScreen('join-setup')">
+      <span class="icon">⚡</span>Peserta<span class="label">Tekan buzzer</span>
+    </button>
+    <button class="mode-btn btn-spectate" onclick="gotoScreen('spectate-join')">
+      <span class="icon">👁️</span>Penonton<span class="label">Lihat hasil buzzer</span>
+    </button>
+  </div>
+  <div class="conn-method">
+    <strong>Cara pakai:</strong> Host buat sesi → catat <strong style="color:var(--gold)">Kode Room</strong> → bagikan ke peserta. Peserta masukkan kode room dan pilih tim. Bisa dari HP berbeda maupun jaringan berbeda!
+  </div>
+</div>
+
+<!-- ════ HOST SETUP ════ -->
+<div id="host-setup" class="screen">
+  <button class="back-btn" onclick="gotoScreen('home')" style="align-self:flex-start;margin:16px 20px 0">← Kembali</button>
+  <span class="screen-title">PENGATURAN HOST</span>
+  <div class="setup-card">
+    <div class="field-label">Nama Peserta</div>
+    <div class="name-inputs">
+      <div class="name-row"><div class="color-dot dot-red"></div><input type="text" id="name-red" value="Tim Merah"></div>
+      <div class="name-row"><div class="color-dot dot-blue"></div><input type="text" id="name-blue" value="Tim Biru"></div>
+    </div>
+  </div>
+  <div class="room-card">
+    <p>Kode Room Anda</p>
+    <div class="room-id-display" id="host-room-preview">—</div>
+    <div class="room-note">Kode ini dibuat otomatis. Bagikan ke peserta agar bisa bergabung dari HP manapun.</div>
+  </div>
+  <button class="action-btn btn-primary" onclick="startHost()">MULAI SESI</button>
+  <button class="action-btn btn-secondary" onclick="gotoScreen('home')">Batal</button>
+</div>
+
+<!-- ════ JOIN SETUP ════ -->
+<div id="join-setup" class="screen">
+  <button class="back-btn" onclick="gotoScreen('home')" style="align-self:flex-start;margin:16px 20px 0">← Kembali</button>
+  <span class="screen-title">BERGABUNG</span>
+  <div class="room-input-wrap">
+    <div class="field-label">Kode Room</div>
+    <input type="text" id="join-room-input" placeholder="XXXX" maxlength="6" oninput="this.value=this.value.toUpperCase()" style="text-align:center;font-family:'Bebas Neue',sans-serif;font-size:32px;letter-spacing:6px;color:var(--gold);">
+  </div>
+  <div class="team-selector">
+    <div class="team-opt" id="opt-red" onclick="selectTeam('red')">
+      <span class="t-icon">🔴</span><span id="join-name-red">Tim Merah</span>
+    </div>
+    <div class="team-opt" id="opt-blue" onclick="selectTeam('blue')">
+      <span class="t-icon">🔵</span><span id="join-name-blue">Tim Biru</span>
+    </div>
+  </div>
+  <div id="join-info" class="room-card" style="display:none">
+    <p>Bergabung sebagai</p>
+    <div id="join-as-label" class="room-id-display" style="font-size:28px">—</div>
+  </div>
+  <button class="action-btn btn-primary" id="join-btn" onclick="joinAsPlayer()" style="opacity:.38;pointer-events:none">BERGABUNG</button>
+  <button class="action-btn btn-secondary" onclick="gotoScreen('home')">Batal</button>
+</div>
+
+<!-- ════ SPECTATE JOIN ════ -->
+<div id="spectate-join" class="screen" style="align-items:center;justify-content:center;gap:24px;padding:40px 24px;background:radial-gradient(ellipse at 50% 0%,#1a1a2e 0%,var(--dark) 70%)">
+  <button class="back-btn" onclick="gotoScreen('home')" style="align-self:flex-start;margin:0">← Kembali</button>
+  <span class="screen-title">KODE ROOM</span>
+  <div class="room-input-wrap">
+    <div class="field-label">Masukkan Kode Room</div>
+    <input type="text" id="spec-room-input" placeholder="XXXX" maxlength="6" oninput="this.value=this.value.toUpperCase()" style="text-align:center;font-family:'Bebas Neue',sans-serif;font-size:32px;letter-spacing:6px;color:var(--gold);">
+  </div>
+  <button class="action-btn btn-primary" onclick="joinAsSpectator()">TONTON</button>
+  <button class="action-btn btn-secondary" onclick="gotoScreen('home')">Batal</button>
+</div>
+
+<!-- ════ HOST CONTROL ════ -->
+<div id="host-control" class="screen">
+  <div class="host-header">
+    <div>
+      <h2>🎙️ HOST PANEL</h2>
+      <div class="room-badge">ROOM: <span id="host-room-badge">—</span></div>
+    </div>
+    <span class="status-badge badge-ready" id="host-status-badge">SIAP</span>
+  </div>
+
+  <div class="score-bar">
+    <div class="score-side score-red" id="score-side-red">
+      <span id="host-name-red" style="color:var(--red);font-size:13px;font-weight:700">Tim Merah</span>
+      <span class="score-num" id="score-red">0</span>
+    </div>
+    <div class="score-divider"></div>
+    <div class="score-side score-blue" id="score-side-blue">
+      <span class="score-num" id="score-blue">0</span>
+      <span id="host-name-blue" style="color:var(--blue);font-size:13px;font-weight:700">Tim Biru</span>
+    </div>
+  </div>
+
+  <div class="host-result-area result-idle-bg" id="host-result-panel">
+    <div id="host-idle-view"><div class="idle-text">MENUNGGU<br>BUZZER...</div></div>
+    <div id="host-buzz-view" style="display:none">
+      <div class="buzz-result-card">
+        <div class="result-team-icon" id="host-result-icon">🏆</div>
+        <div class="result-winner-label">MENEKAN BUZZER PERTAMA</div>
+        <div class="result-winner-name" id="host-result-name">—</div>
+        <div class="result-winner-time" id="host-result-time"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="buzz-history" id="buzz-history"></div>
+
+  <div class="host-actions">
+    <div class="row">
+      <button class="ctrl-btn btn-point-red" onclick="addPoint('red')">+1 <span id="ha-name-red">Merah</span></button>
+      <button class="ctrl-btn btn-point-blue" onclick="addPoint('blue')">+1 <span id="ha-name-blue">Biru</span></button>
+    </div>
+    <div class="row">
+      <button class="ctrl-btn btn-reset" onclick="resetBuzzer()">🔄 Reset Buzzer</button>
+      <button class="ctrl-btn btn-lock" id="lock-btn" onclick="toggleLock()">🔒 Kunci</button>
+    </div>
+    <button class="action-btn btn-secondary" onclick="endSession()" style="margin-top:2px">Akhiri Sesi</button>
+  </div>
+</div>
+
+<!-- ════ PLAYER BUZZ ════ -->
+<div id="player-buzz" class="screen">
+  <div class="player-top">
+    <span class="player-name-tag" id="player-name-display" style="color:var(--red)">Tim Merah</span>
+    <span><span class="conn-dot" id="player-conn-dot"></span><span class="conn-label">Terhubung</span></span>
+  </div>
+
+  <div class="buzz-area">
+    <button class="big-buzzer buzzer-red" id="big-buzz-btn" onclick="pressBuzzer()">
+      <span class="buzz-icon">⚡</span>BUZZ!
+      <span class="spacebar-hint">SPASI / TAP</span>
+    </button>
+    <div class="player-status-card psc-idle" id="player-status-card">
+      <span class="psc-emoji" id="psc-emoji">🎯</span>
+      <div class="psc-text" id="psc-text">Siap menjawab?</div>
+      <div class="psc-sub" id="psc-sub">Tekan tombol secepatnya!</div>
+    </div>
+    <button class="retry-btn" id="retry-btn" onclick="requestRetry()">🔄 MINTA ULANGI</button>
+  </div>
+
+  <div class="buzz-status-text" id="player-status-text">Tunggu soal dari juri</div>
+</div>
+
+<!-- ════ SPECTATOR ════ -->
+<div id="spectator" class="screen">
+  <div class="spec-header">
+    <h2>👁️ LAYAR PENONTON</h2>
+    <div class="room-badge">ROOM: <span id="spec-room-badge">—</span></div>
+  </div>
+  <div class="spec-main result-idle-bg" id="spec-main">
+    <div class="idle-text" id="spec-idle">MENUNGGU<br>BUZZER...</div>
+    <div class="spec-buzz-view" id="spec-buzz-view">
+      <div style="font-size:76px" id="spec-icon">🏆</div>
+      <div class="result-winner-label">MENEKAN BUZZER PERTAMA</div>
+      <div class="result-winner-name" id="spec-name">—</div>
+    </div>
+  </div>
+  <div class="score-bar" style="border-top:1px solid var(--border)">
+    <div class="score-side score-red">
+      <span id="spec-name-red" style="color:var(--red);font-size:13px;font-weight:700">Merah</span>
+      <span class="score-num" id="spec-score-red">0</span>
+    </div>
+    <div class="score-divider"></div>
+    <div class="score-side score-blue">
+      <span class="score-num" id="spec-score-blue">0</span>
+      <span id="spec-name-blue" style="color:var(--blue);font-size:13px;font-weight:700">Biru</span>
+    </div>
+  </div>
+  <div style="padding:14px 16px;background:var(--panel);border-top:1px solid var(--border)">
+    <button class="action-btn btn-secondary" onclick="leaveSpectator()">Keluar</button>
+  </div>
+</div>
+
+
+<script>
+// ══════════════════════════════════════════
+// FIREBASE REST API — tidak butuh SDK, tidak butuh CDN
+// Bekerja di Netlify, GitHub Pages, dan semua hosting
+// ══════════════════════════════════════════
+const FB_URL = "https://buzzer-25742-default-rtdb.asia-southeast1.firebasedatabase.app";
+
+async function fbRead() {
+  try {
+    const res = await fetch(FB_URL + "/rooms/" + currentRoomId + ".json");
+    if (!res.ok) throw new Error("HTTP " + res.status);
+    const val = await res.json();
+    return val ? val : defaultState();
+  } catch(e) {
+    console.error("fbRead error:", e);
+    return defaultState();
+  }
+}
+
+async function fbWrite(s) {
+  s.lastUpdate = Date.now();
+  const res = await fetch(FB_URL + "/rooms/" + currentRoomId + ".json", {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(s)
+  });
+  if (!res.ok) throw new Error("HTTP " + res.status);
+}
+
+// Polling setiap 500ms sebagai realtime listener
+function fbSubscribe(cb) {
+  let lastUpdate = 0;
+  const interval = setInterval(async () => {
+    try {
+      const res = await fetch(FB_URL + "/rooms/" + currentRoomId + ".json");
+      if (!res.ok) return;
+      const val = await res.json();
+      if (val && val.lastUpdate !== lastUpdate) {
+        lastUpdate = val.lastUpdate;
+        cb(val);
+      }
+    } catch(e) {}
+  }, 500);
+  return () => clearInterval(interval);
+}
+
+// ── Unified API ──
+async function readState() { return await fbRead(); }
+async function writeState(s) { return await fbWrite(s); }
+function subscribe(cb) { return fbSubscribe(cb); }
+function stopSubscription() { if (fbUnsubscribe) { fbUnsubscribe(); fbUnsubscribe = null; } }
+
+// ══════════════════════════════════════════
+// AUDIO ENGINE
+// ══════════════════════════════════════════
+let audioCtx = null;
+function getAudio() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+  return audioCtx;
+}
+
+function playBuzzSound(team) {
+  try {
+    const ctx = getAudio();
+    const now = ctx.currentTime;
+    const comp = ctx.createDynamicsCompressor();
+    comp.threshold.value = -6; comp.knee.value = 3;
+    comp.ratio.value = 20; comp.attack.value = 0.001; comp.release.value = 0.1;
+    comp.connect(ctx.destination);
+    const freq = team === 'red' ? 880 : 1046;
+    const osc = ctx.createOscillator();
+    const gainOsc = ctx.createGain();
+    osc.type = 'square';
+    osc.frequency.setValueAtTime(freq, now);
+    gainOsc.gain.setValueAtTime(0, now);
+    gainOsc.gain.linearRampToValueAtTime(1.4, now + 0.005);
+    gainOsc.gain.setValueAtTime(1.4, now + 0.15);
+    gainOsc.gain.linearRampToValueAtTime(0, now + 0.20);
+    osc.connect(gainOsc); gainOsc.connect(comp);
+    osc.start(now); osc.stop(now + 0.21);
+    const osc2 = ctx.createOscillator();
+    const gain2 = ctx.createGain();
+    osc2.type = 'square';
+    osc2.frequency.setValueAtTime(freq / 2, now);
+    gain2.gain.setValueAtTime(0, now);
+    gain2.gain.linearRampToValueAtTime(1.0, now + 0.005);
+    gain2.gain.setValueAtTime(1.0, now + 0.15);
+    gain2.gain.linearRampToValueAtTime(0, now + 0.20);
+    osc2.connect(gain2); gain2.connect(comp);
+    osc2.start(now); osc2.stop(now + 0.21);
+    const clickBuf = ctx.createBuffer(1, Math.floor(ctx.sampleRate * 0.014), ctx.sampleRate);
+    const cd = clickBuf.getChannelData(0);
+    for (let i = 0; i < cd.length; i++) cd[i] = (Math.random() * 2 - 1);
+    const clickSrc = ctx.createBufferSource();
+    const clickGain = ctx.createGain();
+    clickSrc.buffer = clickBuf;
+    clickGain.gain.setValueAtTime(2.0, now);
+    clickGain.gain.linearRampToValueAtTime(0, now + 0.014);
+    clickSrc.connect(clickGain); clickGain.connect(comp);
+    clickSrc.start(now);
+    [0.22, 0.44].forEach(offset => {
+      const o = ctx.createOscillator(); const g = ctx.createGain();
+      o.type = 'square'; o.frequency.setValueAtTime(freq, now + offset);
+      g.gain.setValueAtTime(0, now + offset);
+      g.gain.linearRampToValueAtTime(1.2, now + offset + 0.005);
+      g.gain.setValueAtTime(1.2, now + offset + 0.13);
+      g.gain.linearRampToValueAtTime(0, now + offset + 0.17);
+      o.connect(g); g.connect(comp);
+      o.start(now + offset); o.stop(now + offset + 0.18);
+    });
+  } catch(e) {}
+}
+
+function playResetSound() {
+  try {
+    const ctx = getAudio(); const now = ctx.currentTime;
+    const osc = ctx.createOscillator(); const gain = ctx.createGain();
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(600, now);
+    osc.frequency.setValueAtTime(900, now + 0.06);
+    gain.gain.setValueAtTime(0.3, now);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.2);
+    osc.connect(gain); gain.connect(ctx.destination);
+    osc.start(now); osc.stop(now + 0.22);
+  } catch(e) {}
+}
+
+function playPointSound() {
+  try {
+    const ctx = getAudio(); const now = ctx.currentTime;
+    [523, 659, 784].forEach((f, i) => {
+      const osc = ctx.createOscillator(); const g = ctx.createGain();
+      osc.type = 'sine'; osc.frequency.value = f;
+      g.gain.setValueAtTime(0.3, now + i*0.07);
+      g.gain.exponentialRampToValueAtTime(0.001, now + i*0.07 + 0.14);
+      osc.connect(g); g.connect(ctx.destination);
+      osc.start(now + i*0.07); osc.stop(now + i*0.07 + 0.15);
+    });
+  } catch(e) {}
+}
+
+// ══════════════════════════════════════════
+// STATE
+// ══════════════════════════════════════════
+let localRole = null;
+let localTeam = null;
+let selectedTeamInJoin = null;
+let currentRoomId = null;
+let lastBuzzerSeen = null;
+let fbUnsubscribe = null;
+let pendingRoomId = null;
+
+function generateRoomId() {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  let id = '';
+  for (let i = 0; i < 4; i++) id += chars[Math.floor(Math.random() * chars.length)];
+  return id;
+}
+
+function defaultState() {
+  return {
+    names: { red: 'Tim Merah', blue: 'Tim Biru' },
+    scores: { red: 0, blue: 0 },
+    buzzer: null,
+    buzzerTime: null,
+    locked: false,
+    sessionActive: true,
+    history: [],
+    lastUpdate: Date.now()
+  };
+}
+
+// ══════════════════════════════════════════
+// UI HELPERS
+// ══════════════════════════════════════════
+function hideLoading() { document.getElementById('loading-overlay').classList.add('hidden'); }
+function showLoading(msg) {
+  const el = document.getElementById('loading-overlay');
+  el.querySelector('.loading-text').textContent = msg || 'Memuat...';
+  el.classList.remove('hidden');
+}
+function showToast(msg, dur=3000) {
+  const el = document.getElementById('toast');
+  el.textContent = msg; el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), dur);
+}
+function gotoScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+// Init
+(function() {
+  pendingRoomId = generateRoomId();
+  document.getElementById('host-room-preview').textContent = pendingRoomId;
+  hideLoading();
+})();
+
+// ══════════════════════════════════════════
+// HOME / SETUP
+// ══════════════════════════════════════════
+function selectTeam(team) {
+  selectedTeamInJoin = team;
+  document.getElementById('opt-red').className = 'team-opt' + (team==='red'?' selected-red':'');
+  document.getElementById('opt-blue').className = 'team-opt' + (team==='blue'?' selected-blue':'');
+  document.getElementById('join-as-label').textContent = team==='red'?'Tim Merah':'Tim Biru';
+  document.getElementById('join-as-label').style.color = team==='red'?'var(--red)':'var(--blue)';
+  document.getElementById('join-info').style.display = 'block';
+  const btn = document.getElementById('join-btn');
+  btn.style.opacity = '1'; btn.style.pointerEvents = 'auto';
+}
+
+async function startHost() {
+  const nameRed = document.getElementById('name-red').value.trim() || 'Tim Merah';
+  const nameBlue = document.getElementById('name-blue').value.trim() || 'Tim Biru';
+  currentRoomId = pendingRoomId;
+  showLoading('Membuat room...');
+  try {
+    const s = defaultState();
+    s.names = { red: nameRed, blue: nameBlue };
+    await writeState(s);
+    localRole = 'host';
+    document.getElementById('host-room-badge').textContent = currentRoomId;
+    document.getElementById('ha-name-red').textContent = nameRed.split(' ')[0];
+    document.getElementById('ha-name-blue').textContent = nameBlue.split(' ')[0];
+    renderHostPanel(s);
+    gotoScreen('host-control');
+    startListening();
+  } catch(e) {
+    showToast('Gagal membuat room: ' + e.message);
+  }
+  hideLoading();
+}
+
+async function joinAsPlayer() {
+  if (!selectedTeamInJoin) return;
+  const roomCode = document.getElementById('join-room-input').value.trim().toUpperCase();
+  if (roomCode.length < 4) { showToast('Masukkan kode room yang valid'); return; }
+  showLoading('Bergabung ke room...');
+  currentRoomId = roomCode;
+  try {
+    const s = await readState();
+    if (!s.sessionActive) { showToast('Sesi sudah berakhir atau room tidak ditemukan'); hideLoading(); return; }
+    localRole = 'player'; localTeam = selectedTeamInJoin;
+    const name = s.names?.[localTeam] || (localTeam==='red'?'Tim Merah':'Tim Biru');
+    document.getElementById('player-name-display').textContent = name;
+    document.getElementById('player-name-display').style.color = localTeam==='red'?'var(--red)':'var(--blue)';
+    document.getElementById('big-buzz-btn').className = 'big-buzzer buzzer-' + localTeam;
+    document.getElementById('retry-btn').className = 'retry-btn retry-' + localTeam;
+    gotoScreen('player-buzz');
+    startListening();
+    renderPlayerBuzz(s);
+  } catch(e) {
+    showToast('Gagal bergabung: ' + e.message);
+  }
+  hideLoading();
+}
+
+async function joinAsSpectator() {
+  const roomCode = document.getElementById('spec-room-input').value.trim().toUpperCase();
+  if (roomCode.length < 4) { showToast('Masukkan kode room yang valid'); return; }
+  showLoading('Membuka layar penonton...');
+  currentRoomId = roomCode;
+  try {
+    const s = await readState();
+    localRole = 'spectator';
+    document.getElementById('spec-room-badge').textContent = currentRoomId;
+    renderSpectator(s);
+    gotoScreen('spectator');
+    startListening();
+  } catch(e) {
+    showToast('Gagal membuka penonton: ' + e.message);
+  }
+  hideLoading();
+}
+
+function leaveSpectator() {
+  stopSubscription();
+  gotoScreen('home');
+}
+
+// ══════════════════════════════════════════
+// HOST ACTIONS
+// ══════════════════════════════════════════
+async function resetBuzzer() {
+  playResetSound();
+  const s = await readState();
+  s.buzzer = null; s.buzzerTime = null; s.locked = false;
+  await writeState(s);
+}
+async function toggleLock() {
+  const s = await readState();
+  s.locked = !s.locked;
+  await writeState(s);
+}
+async function addPoint(team) {
+  playPointSound();
+  const s = await readState();
+  s.scores[team]++;
+  await writeState(s);
+}
+async function endSession() {
+  if (!confirm('Akhiri sesi? Room akan ditutup.')) return;
+  const s = await readState();
+  s.sessionActive = false;
+  await writeState(s);
+  stopSubscription();
+  gotoScreen('home');
+  pendingRoomId = generateRoomId();
+  document.getElementById('host-room-preview').textContent = pendingRoomId;
+}
+
+// ══════════════════════════════════════════
+// PLAYER ACTIONS
+// ══════════════════════════════════════════
+async function pressBuzzer() {
+  getAudio();
+  const s = await readState();
+  if (s.locked || s.buzzer) return;
+  s.buzzer = localTeam;
+  s.buzzerTime = Date.now();
+  const d = new Date(s.buzzerTime);
+  const timeStr = d.getHours().toString().padStart(2,'0')+':'+
+    d.getMinutes().toString().padStart(2,'0')+':'+
+    d.getSeconds().toString().padStart(2,'0');
+  s.history = s.history || [];
+  s.history.push({ team: localTeam, name: s.names[localTeam], time: s.buzzerTime, timeStr });
+  await writeState(s);
+  playBuzzSound(localTeam);
+  const btn = document.getElementById('big-buzz-btn');
+  btn.classList.add('buzzer-winner');
+  setTimeout(() => btn.classList.remove('buzzer-winner'), 600);
+  const fl = document.getElementById('flash-' + localTeam);
+  fl.classList.add('flash');
+  setTimeout(() => fl.classList.remove('flash'), 500);
+}
+
+async function requestRetry() {
+  const s = await readState();
+  s.buzzer = null; s.buzzerTime = null; s.locked = false;
+  s.retryRequest = (s.retryRequest || 0) + 1;
+  await writeState(s);
+  playResetSound();
+}
+
+// ══════════════════════════════════════════
+// SPACEBAR
+// ══════════════════════════════════════════
+document.addEventListener('keydown', (e) => {
+  if (e.code === 'Space' || e.key === ' ') {
+    if (document.activeElement.tagName === 'INPUT') return;
+    e.preventDefault();
+    if (localRole === 'player') {
+      const btn = document.getElementById('big-buzz-btn');
+      if (!btn.classList.contains('buzzer-disabled')) {
+        btn.classList.add('spacebar-active');
+        setTimeout(() => btn.classList.remove('spacebar-active'), 150);
+        pressBuzzer();
+      }
+    }
+  }
+});
+
+// ══════════════════════════════════════════
+// RENDER FUNCTIONS
+// ══════════════════════════════════════════
+function renderHostPanel(s) {
+  document.getElementById('host-name-red').textContent = s.names.red;
+  document.getElementById('host-name-blue').textContent = s.names.blue;
+  document.getElementById('ha-name-red').textContent = s.names.red.split(' ')[0];
+  document.getElementById('ha-name-blue').textContent = s.names.blue.split(' ')[0];
+  document.getElementById('score-red').textContent = s.scores.red;
+  document.getElementById('score-blue').textContent = s.scores.blue;
+  const badge = document.getElementById('host-status-badge');
+  const lockBtn = document.getElementById('lock-btn');
+  if (s.locked && !s.buzzer) {
+    badge.className = 'status-badge badge-locked'; badge.textContent = 'TERKUNCI';
+    lockBtn.textContent = '🔓 Buka Kunci';
+  } else if (s.buzzer) {
+    badge.className = 'status-badge badge-buzz'; badge.textContent = 'BUZZED!';
+    lockBtn.textContent = '🔒 Kunci';
+  } else {
+    badge.className = 'status-badge badge-ready'; badge.textContent = 'SIAP';
+    lockBtn.textContent = '🔒 Kunci';
+  }
+  document.getElementById('score-side-red').className = 'score-side score-red' + (s.buzzer==='red'?' winner-glow-red':'');
+  document.getElementById('score-side-blue').className = 'score-side score-blue' + (s.buzzer==='blue'?' winner-glow-blue':'');
+  const panel = document.getElementById('host-result-panel');
+  const idleView = document.getElementById('host-idle-view');
+  const buzzView = document.getElementById('host-buzz-view');
+  if (s.buzzer) {
+    idleView.style.display = 'none';
+    buzzView.style.display = 'block';
+    panel.className = 'host-result-area ' + (s.buzzer==='red'?'result-red-bg':'result-blue-bg');
+    document.getElementById('host-result-icon').textContent = s.buzzer==='red'?'🔴':'🔵';
+    document.getElementById('host-result-name').textContent = s.names[s.buzzer];
+    document.getElementById('host-result-name').style.color = s.buzzer==='red'?'var(--red)':'var(--blue)';
+    if (s.buzzerTime) {
+      const d = new Date(s.buzzerTime);
+      document.getElementById('host-result-time').textContent =
+        d.getHours().toString().padStart(2,'0')+':'+
+        d.getMinutes().toString().padStart(2,'0')+':'+
+        d.getSeconds().toString().padStart(2,'0')+'.'+
+        Math.floor(d.getMilliseconds()/10).toString().padStart(2,'0');
+    }
+  } else {
+    idleView.style.display = 'block';
+    buzzView.style.display = 'none';
+    panel.className = 'host-result-area result-idle-bg';
+  }
+  const hist = s.history || [];
+  const histEl = document.getElementById('buzz-history');
+  if (hist.length === 0) {
+    histEl.innerHTML = '<span style="font-size:12px;color:rgba(255,255,255,0.2);letter-spacing:1px">Riwayat buzzer muncul di sini</span>';
+  } else {
+    histEl.innerHTML = hist.slice(-6).reverse().map((h,i) =>
+      `<span class="hist-chip hist-${h.team}">${i===0?'🔥 ':''}<b>${h.name}</b> · ${h.timeStr}</span>`
+    ).join('');
+  }
+}
+
+function renderPlayerBuzz(s) {
+  const btn = document.getElementById('big-buzz-btn');
+  const card = document.getElementById('player-status-card');
+  const emoji = document.getElementById('psc-emoji');
+  const text = document.getElementById('psc-text');
+  const sub = document.getElementById('psc-sub');
+  const retryBtn = document.getElementById('retry-btn');
+  const bottomText = document.getElementById('player-status-text');
+  if (s.locked && !s.buzzer) {
+    btn.className = 'big-buzzer buzzer-' + localTeam + ' buzzer-disabled';
+    card.className = 'player-status-card psc-locked';
+    emoji.textContent = '⏸️';
+    text.textContent = 'Buzzer dikunci juri';
+    sub.textContent = 'Tunggu hingga dibuka';
+    retryBtn.style.display = 'none';
+    bottomText.textContent = 'Juri sedang mempersiapkan soal';
+    return;
+  }
+  if (s.buzzer) {
+    btn.className = 'big-buzzer buzzer-' + localTeam + ' buzzer-disabled';
+    retryBtn.style.display = 'block';
+    if (s.buzzer === localTeam) {
+      card.className = 'player-status-card psc-win';
+      emoji.textContent = '🎉';
+      text.textContent = 'Kamu yang pertama!';
+      sub.textContent = 'Silakan jawab pertanyaan';
+      bottomText.textContent = 'Jawab sekarang!';
+    } else {
+      card.className = 'player-status-card psc-lose';
+      emoji.textContent = '❌';
+      text.textContent = (s.names?.[s.buzzer] || s.buzzer) + ' lebih cepat!';
+      sub.textContent = 'Lebih cepat di soal berikutnya';
+      bottomText.textContent = 'Tunggu soal berikutnya';
+    }
+  } else {
+    btn.className = 'big-buzzer buzzer-' + localTeam;
+    card.className = 'player-status-card psc-idle';
+    emoji.textContent = '🎯';
+    text.textContent = 'Siap menjawab?';
+    sub.textContent = 'Tekan tombol atau SPASI!';
+    retryBtn.style.display = 'none';
+    bottomText.textContent = 'Tunggu soal dari juri';
+  }
+}
+
+function renderSpectator(s) {
+  document.getElementById('spec-name-red').textContent = s.names?.red || 'Merah';
+  document.getElementById('spec-name-blue').textContent = s.names?.blue || 'Biru';
+  document.getElementById('spec-score-red').textContent = s.scores?.red || 0;
+  document.getElementById('spec-score-blue').textContent = s.scores?.blue || 0;
+  const idleEl = document.getElementById('spec-idle');
+  const buzzView = document.getElementById('spec-buzz-view');
+  const main = document.getElementById('spec-main');
+  if (s.buzzer) {
+    idleEl.style.display = 'none';
+    buzzView.style.display = 'flex';
+    main.className = 'spec-main ' + (s.buzzer==='red'?'result-red-bg':'result-blue-bg');
+    document.getElementById('spec-icon').textContent = s.buzzer==='red'?'🔴':'🔵';
+    document.getElementById('spec-name').textContent = s.names?.[s.buzzer] || s.buzzer;
+    document.getElementById('spec-name').style.color = s.buzzer==='red'?'var(--red)':'var(--blue)';
+  } else {
+    idleEl.style.display = 'block';
+    buzzView.style.display = 'none';
+    main.className = 'spec-main result-idle-bg';
+  }
+}
+
+// ══════════════════════════════════════════
+// REAL-TIME LISTENER
+// ══════════════════════════════════════════
+function startListening() {
+  stopSubscription();
+  fbUnsubscribe = subscribe((s) => {
+    if (s.buzzer && s.buzzer !== lastBuzzerSeen) {
+      lastBuzzerSeen = s.buzzer;
+      if (localRole === 'host' || localRole === 'spectator') {
+        playBuzzSound(s.buzzer);
+        const fl = document.getElementById('flash-' + s.buzzer);
+        fl.classList.add('flash');
+        setTimeout(() => fl.classList.remove('flash'), 500);
+      }
+    }
+    if (!s.buzzer) lastBuzzerSeen = null;
+    if (localRole === 'host') renderHostPanel(s);
+    else if (localRole === 'player') renderPlayerBuzz(s);
+    else if (localRole === 'spectator') renderSpectator(s);
+  });
+}
+
+document.addEventListener('touchstart', () => { try { getAudio(); } catch(e){} }, { once: true });
+document.addEventListener('click', () => { try { getAudio(); } catch(e){} }, { once: true });
+
+window.gotoScreen = gotoScreen;
+window.selectTeam = selectTeam;
+window.startHost = startHost;
+window.joinAsPlayer = joinAsPlayer;
+window.joinAsSpectator = joinAsSpectator;
+window.leaveSpectator = leaveSpectator;
+window.pressBuzzer = pressBuzzer;
+window.requestRetry = requestRetry;
+window.resetBuzzer = resetBuzzer;
+window.toggleLock = toggleLock;
+window.addPoint = addPoint;
+window.endSession = endSession;
+</script>
+</body>
+</html>
