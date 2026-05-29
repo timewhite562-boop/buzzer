@@ -610,6 +610,7 @@ function gotoScreen(id) {
   pendingRoomId = generateRoomId();
   document.getElementById('host-room-preview').textContent = pendingRoomId;
   hideLoading();
+  gotoScreen('home');
 })();
 
 // ══════════════════════════════════════════
